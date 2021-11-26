@@ -1,3 +1,5 @@
+#!bin/bash
+
 ########################################################
 #########################LICENSE########################
 ########################################################
@@ -28,9 +30,6 @@
 #WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
 #SOFTWARE.
 
-
-#!/bin/bash
-
 ########################################################
 ########################FUNCTIONS#######################
 ########################################################
@@ -45,7 +44,7 @@ Help()
    echo
    echo "Syntax:"
    echo
-   echo "word-count-alice.sh [-U|D|F] [-h] [Frequency threshold to store words] [String ending line of the header to remove] [String starting line of the footer to remove] [Desired output filename] [Path or URL]"
+   echo "$0 [-U|D|F] [-h] [Frequency threshold to store words] [String ending line of the header to remove] [String starting line of the footer to remove] [Path or URL]"
    echo
    echo "Options:"
    echo
@@ -56,26 +55,23 @@ Help()
    echo
    echo "Examples:"
    echo
-   echo "bash wordcount.sh -U 50 \"START OF THE PROJECT GUTENBERG EBOOK ALICE’S ADVENTURES IN WONDERLAND\" \"END OF THE PROJECT GUTENBERG EBOOK ALICE’S ADVENTURES IN WONDERLAND\" \"trial\" \"https://www.gutenberg.org/files/11/11-0.txt\""
+   echo "bash ""$0"" -U 50 \"START OF THE PROJECT GUTENBERG EBOOK ALICE’S ADVENTURES IN WONDERLAND\" \"END OF THE PROJECT GUTENBERG EBOOK ALICE’S ADVENTURES IN WONDERLAND\" \"https://www.gutenberg.org/files/11/11-0.txt\""
    echo
-   echo "bash wordcount.sh -D 50 \"START OF THE PROJECT GUTENBERG EBOOK ALICE’S ADVENTURES IN WONDERLAND\" \"END OF THE PROJECT GUTENBERG EBOOK ALICE’S ADVENTURES IN WONDERLAND\" \"trial\" \"txtFiles\""
+   echo "bash ""$0"" -D 50 \"START OF THE PROJECT GUTENBERG EBOOK ALICE’S ADVENTURES IN WONDERLAND\" \"END OF THE PROJECT GUTENBERG EBOOK ALICE’S ADVENTURES IN WONDERLAND\" \"txtFiles\""
    echo
-   echo "bash wordcount.sh -F 50 \"START OF THE PROJECT GUTENBERG EBOOK ALICE’S ADVENTURES IN WONDERLAND\" \"END OF THE PROJECT GUTENBERG EBOOK ALICE’S ADVENTURES IN WONDERLAND\" \"trial\" \"11-0.txt\""
+   echo "bash ""$0"" -F 50 \"START OF THE PROJECT GUTENBERG EBOOK ALICE’S ADVENTURES IN WONDERLAND\" \"END OF THE PROJECT GUTENBERG EBOOK ALICE’S ADVENTURES IN WONDERLAND\" \"11-0.txt\""
    echo
 }
 
 Wordcountsplitter()
 {
-   dt=$(date '+%y%m%d-%H%M%S');
-   outfilename="$dt-$4-$1-${5%????}";
-
    nstart=$(expr $(awk "/$2/{print NR}" "$5") + 1);
    nend=$(expr $(awk "/$3/{print NR}" "$5") - 1);
    cleantext=$(sed -n "${nstart},${nend}p" "$5" | sed 's/[^a-zA-Z0-9 ]//g' | tr '[:upper:]' '[:lower:]' | sed 's/ /\n/g');
    nrep=$(printf "$cleantext" | sort | uniq -c);
-   outp=$(printf "$nrep" | sed 's/[^a-zA-Z0-9 ]//g' | sort -r | awk -v th="$1" '$1>th');
+   outp=$(printf "$nrep" | sort -r | awk -v th="$1" '$1>th');
 
-   echo "$outp" > "$outfilename".txt;
+   echo "$outp" > "$4".txt;
    rm "$5";
 }
 
@@ -87,22 +83,27 @@ Wordcountsplitter()
 while getopts ":hDFU:" option; do
    case "$option" in
      h) # display Help
-         Help
+         Help "$0";
          exit;;
      D) # Read all txt files from a directory
-         cd "$6";
-         filenames=($(ls *.txt));
+         cd "$5";
+         counter=0;
+         filenames=($(ls *".txt"));
          for filename in ${filenames[@]}; do
-             Wordcountsplitter "$2" "$3" "$4" "$5" "$filename";
+	     nameout="word-count-alice-"$(printf '%04d' $counter);
+             Wordcountsplitter "$2" "$3" "$4" "$nameout" "$filename";
+             counter=$(($counter+1));
          done
          exit;;
      F) # Read a single txt file in the same directory as the script
-         Wordcountsplitter "$2" "$3" "$4" "$5" "$6"; 
+         nameout="word-count-alice";
+         Wordcountsplitter "$2" "$3" "$4" "$nameout" "$5"; 
          exit;;
      U) # Download file from an URL
-         wget "$6"
-	 filename=$(basename "$6")
-         Wordcountsplitter "$2" "$3" "$4" "$5" "$filename";
+         wget "$5"
+	 filename=$(basename "$5")
+	 nameout="word-count-alice";
+         Wordcountsplitter "$2" "$3" "$4" "$nameout" "$filename";
          exit;;
    esac
 done

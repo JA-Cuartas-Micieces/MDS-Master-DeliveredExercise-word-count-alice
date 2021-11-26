@@ -1,6 +1,7 @@
 PROJECT
 
 Exercise of the DS Master we are attending. This script (word-count-alice.sh) reads a txt file and exports a new one with the words ranked by their frequency down to a minimum value, which can be set up. 
+It was made and tested in Ubuntu 20.04.3 LTS.
 
 CONTACT AND CONTRIBUTION
 
